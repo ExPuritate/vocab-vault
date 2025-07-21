@@ -62,16 +62,16 @@ pub fn lookup_stems(
 
                 let next_word = latin_words_map.get(&(latin_word.id + 1));
 
-                if next_word.is_some() {
-                    let next_senses = next_word.unwrap().senses.clone();
+                if let Some(next_word) = next_word {
+                    let next_senses = next_word.senses.clone();
 
                     // senses starting with | also apply to word before
-                    if next_senses.len() > 0 && next_senses[0].starts_with('|') {
+                    if !next_senses.is_empty() && next_senses[0].starts_with('|') {
                         new_word.word.set_extension_senses(next_senses);
                     }
                 }
 
-                new_word.word.set_word(&latin_word);
+                new_word.word.set_word(latin_word);
                 new_word.stem = stem;
                 new_word.inflections = Some(new_inflections);
 
@@ -80,7 +80,7 @@ pub fn lookup_stems(
         }
     }
 
-    if output.len() > 0 {
+    if !output.is_empty() {
         Some(output)
     } else {
         None

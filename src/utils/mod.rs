@@ -1,3 +1,5 @@
+use crate::Error;
+
 pub mod data;
 pub mod principle_part_generator;
 pub mod type_translator;
@@ -9,14 +11,14 @@ pub mod type_translator;
 pub fn number_with_ending(number: i8) -> String {
     let last_digit = number % 10;
     let last_two_digits = number % 100;
-    if last_two_digits >= 11 && last_two_digits <= 13 {
-        return format!("{}th", number);
+    if (11..=13).contains(&last_two_digits) {
+        return format!("{number}th");
     }
     match last_digit {
-        1 => format!("{}st", number),
-        2 => format!("{}nd", number),
-        3 => format!("{}rd", number),
-        _ => format!("{}th", number),
+        1 => format!("{number}st"),
+        2 => format!("{number}nd"),
+        3 => format!("{number}rd"),
+        _ => format!("{number}th"),
     }
 }
 
@@ -60,17 +62,11 @@ pub fn remove_non_alphanumeric(word: String) -> String {
 }
 
 pub fn is_vowel(c: char) -> bool {
-    match c {
-        'a' | 'e' | 'i' | 'o' | 'u' => true,
-        _ => false,
-    }
+    matches!(c, 'a' | 'e' | 'i' | 'o' | 'u')
 }
 
 pub fn is_roman_digit(c: char) -> bool {
-    match c.to_ascii_uppercase() {
-        'I' | 'V' | 'X' | 'L' | 'C' | 'D' | 'M' => true,
-        _ => false,
-    }
+    matches!(c.to_ascii_uppercase(), 'I' | 'V' | 'X' | 'L' | 'C' | 'D' | 'M')
 }
 
 pub fn is_roman_number(possible_roman_number: &str) -> bool {
@@ -85,7 +81,7 @@ pub fn is_common_prefix(prefix: String) -> bool {
     constant_prefixes.contains(&prefix.as_str())
 }
 
-pub fn translate_roman_digit_to_number(c: char) -> Result<i32, String> {
+pub fn translate_roman_digit_to_number(c: char) -> anyhow::Result<i32> {
     match c.to_ascii_uppercase() {
         'I' => Ok(1),
         'V' => Ok(5),
@@ -94,11 +90,11 @@ pub fn translate_roman_digit_to_number(c: char) -> Result<i32, String> {
         'C' => Ok(100),
         'D' => Ok(500),
         'M' => Ok(1000),
-        _ => return Err(format!("{} is an invalid roman numeral digit", c)),
+        _ => Err(Error::InvalidRomanNumeral(c.to_string()).into()),
     }
 }
 
-pub fn translate_number_to_roman_numeral(number: usize) -> Result<String, String> {
+pub fn translate_number_to_roman_numeral(number: usize) -> anyhow::Result<String> {
     let roman_numeral = match number {
         1 => "I",
         5 => "V",
@@ -107,13 +103,13 @@ pub fn translate_number_to_roman_numeral(number: usize) -> Result<String, String
         100 => "C",
         500 => "D",
         1000 => "M",
-        _ => return Err(format!("{} is an invalid number", number)),
+        _ => return Err(Error::InvalidNumber(number.to_string()).into()),
     };
 
     Ok(roman_numeral.to_string())
 }
 
-pub fn evaluate_roman_numeral(roman_numeral: &str) -> Result<i32, String> {
+pub fn evaluate_roman_numeral(roman_numeral: &str) -> anyhow::Result<i32> {
     let mut result = 0;
     let mut last_digit = 0;
     for c in roman_numeral.chars().rev() {
@@ -128,7 +124,7 @@ pub fn evaluate_roman_numeral(roman_numeral: &str) -> Result<i32, String> {
     Ok(result)
 }
 
-pub fn convert_number_to_roman_numeral(number: &str) -> Result<String, String> {
+pub fn convert_number_to_roman_numeral(number: &str) -> anyhow::Result<String> {
     let full_numeral = evaluate_full_numeral_from_number(number)?;
     let proper_numeral = simplify_full_numeral_to_proper_numeral(full_numeral);
     Ok(proper_numeral)
@@ -156,10 +152,10 @@ fn simplify_full_numeral_to_proper_numeral(numeral: String) -> String {
 
         match count {
             1..=3 => new_numeral.push_str(&numeral.repeat(count)),
-            4 => new_numeral.push_str(&format!("{}{}", numeral, five)),
+            4 => new_numeral.push_str(&format!("{numeral}{five}")),
             5 => new_numeral.push_str(five),
             6..=8 => new_numeral.push_str(&format!("{}{}", five, numeral.repeat(count - 5))),
-            9 => new_numeral.push_str(&format!("{}{}", numeral, ten)),
+            9 => new_numeral.push_str(&format!("{numeral}{ten}")),
             _ => (),
         }
     }
@@ -167,7 +163,7 @@ fn simplify_full_numeral_to_proper_numeral(numeral: String) -> String {
     new_numeral
 }
 
-fn evaluate_full_numeral_from_number(number: &str) -> Result<String, String> {
+fn evaluate_full_numeral_from_number(number: &str) -> anyhow::Result<String> {
     let array_of_nums = split_number_by_places(number);
     let mut roman_numeral = String::new();
 

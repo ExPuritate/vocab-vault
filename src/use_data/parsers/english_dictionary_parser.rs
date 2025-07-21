@@ -17,9 +17,9 @@ pub fn parse_english_dictionary(
 
     if let Some(amount) = amount {
         if random {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             while english_word_info_list.len() as i32 != amount {
-                let random_index = rng.gen_range(0..english_dictionary.len());
+                let random_index = rng.random_range(0..english_dictionary.len());
                 let word_at_index = english_dictionary[random_index].clone();
                 if !word_fits_filters(
                     &word_at_index.orth,
@@ -39,7 +39,7 @@ pub fn parse_english_dictionary(
                     continue;
                 }
 
-                english_word_info_list.push(word);
+                english_word_info_list.push(word.clone());
                 if english_word_info_list.len() as i32 == amount {
                     break;
                 }
@@ -51,7 +51,7 @@ pub fn parse_english_dictionary(
                 continue;
             }
 
-            english_word_info_list.push(word);
+            english_word_info_list.push(word.clone());
         }
     }
 

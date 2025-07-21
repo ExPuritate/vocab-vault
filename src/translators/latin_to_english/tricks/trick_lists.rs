@@ -27,7 +27,7 @@ pub fn match_tricks_list(first_char_of_word: char) -> Vec<Trick> {
         'u' => get_u_tricks(),
         'y' => get_y_tricks(),
         'z' => get_z_tricks(),
-        _ => panic!("Invalid first char of word: {}", first_char_of_word),
+        _ => panic!("Invalid first char of word: {first_char_of_word}"),
     }
 }
 
@@ -39,7 +39,7 @@ pub fn match_slur_trick_list(first_char_of_word: char) -> Vec<Trick> {
         'n' => get_n_slur_tricks(),
         'q' => get_q_slur_tricks(),
         's' => get_s_slur_tricks(),
-        _ => panic!("Invalid first char of word: {}", first_char_of_word),
+        _ => panic!("Invalid first char of word: {first_char_of_word}"),
     }
 }
 

@@ -24,8 +24,8 @@ impl EnglishTranslationInfo {
 }
 
 pub fn translate_english_to_latin(
-    english_dictionary: &Vec<EnglishWordInfo>,
-    latin_dictionary: &Vec<LatinWordInfo>,
+    english_dictionary: &[EnglishWordInfo],
+    latin_dictionary: &[LatinWordInfo],
     english_word: &str,
     max: usize,
     sort: bool,
@@ -64,7 +64,7 @@ pub fn translate_english_to_latin(
                 return vec![translation];
             }
             Err(e) => {
-                println!("Error converting number to roman numeral: {}", e);
+                println!("Error converting number to roman numeral: {e}");
                 return output;
             }
         }

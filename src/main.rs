@@ -1,5 +1,6 @@
 pub mod cli;
 use std::io::Write;
+use std::str::FromStr;
 
 use cli::{Arg, Cli, Command, ArgValue};
 use vocab_vault::dictionary_structures::dictionary_keys::PartOfSpeech;
@@ -196,7 +197,7 @@ fn main() {
             }
 
             let word_type = WordType::from_str(type_of_words.as_str()).unwrap_or_else(|e| {
-                println!("{}", e);
+                println!("{e}");
                 std::process::exit(0);
             });
 
@@ -237,14 +238,38 @@ fn main() {
                 ArgValue::Missing(_) => None,
             };
 
-            let to = match to {
-                ArgValue::Present(to) => Some(to),
-                ArgValue::Missing(_) => None,
-            };
-
-            get_list(
-                word_type, pos_list, max, min, exact, amount, random, display, to,
+            let list = get_list(
+                word_type, pos_list, max, min, exact, amount, random
             );
+            
+            if display {
+                println!("{}", serde_json::to_string_pretty(&list).unwrap());
+            }
+        
+            if let ArgValue::Present(mut file_path) = to {
+                if !file_path.ends_with(".json") {
+                    file_path.push_str(".json");
+                }
+        
+                if std::path::Path::new(&file_path).exists() {
+                    println!("File already exists, do you want to overwrite it? (y/n)");
+                    let mut input = String::new();
+                    std::io::stdin().read_line(&mut input).unwrap();
+                    if input.trim() != "y" {
+                        return;
+                    }
+                }
+        
+                let path = std::path::Path::new(&file_path);
+        
+                if !path.exists() {
+                    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+                }
+        
+                let file = std::fs::File::create(&file_path).unwrap();
+                serde_json::to_writer_pretty(file, &list).unwrap();
+                println!("File created successfully at {file_path}");
+            }
         }
         "help" => {
             let command = command.get_value().to_option();

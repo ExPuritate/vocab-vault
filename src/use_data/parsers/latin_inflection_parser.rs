@@ -17,9 +17,9 @@ pub fn parse_latin_inflections(
 
     if let Some(amount) = amount {
         if random {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             while inflection_list.len() as i32 != amount {
-                let random_index = rng.gen_range(0..latin_inflections.len());
+                let random_index = rng.random_range(0..latin_inflections.len());
                 let inflection_at_index = latin_inflections[random_index].clone();
                 if !word_fits_filters(
                     &inflection_at_index.ending,
@@ -46,7 +46,7 @@ pub fn parse_latin_inflections(
                     continue;
                 }
 
-                inflection_list.push(inflection);
+                inflection_list.push(inflection.clone());
                 if inflection_list.len() as i32 == amount {
                     break;
                 }
@@ -65,7 +65,7 @@ pub fn parse_latin_inflections(
                 continue;
             }
 
-            inflection_list.push(inflection);
+            inflection_list.push(inflection.clone());
         }
     }
 

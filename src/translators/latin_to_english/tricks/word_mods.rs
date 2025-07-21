@@ -13,14 +13,16 @@ pub fn flip(str_to_replace: &str, replacement_str: &str, word: &str) -> (String,
         if new_word.len() >= replacement_str.len() + 2 && new_word.starts_with(replacement_str) {
             let canned_explanation = "' may have replaced usual '";
 
-            explanation = if !canned_explanation.is_empty() {
-                format!(
-                    "An initial '{}{}{}'",
-                    str_to_replace, canned_explanation, replacement_str
-                )
-            } else {
-                String::from("")
-            };
+            #[allow(clippy::const_is_empty)]
+            {
+                explanation = if !canned_explanation.is_empty() {
+                    format!(
+                        "An initial '{str_to_replace}{canned_explanation}{replacement_str}'"
+                    )
+                } else {
+                    String::from("")
+                };
+            }
 
             return (new_word, explanation);
         }
@@ -41,8 +43,7 @@ pub fn flip_flop(str_to_replace: &str, replacement_str: &str, word: &str) -> (St
 
         if new_word.len() >= replacement_str.len() + 2 && new_word.starts_with(replacement_str) {
             let explanation = format!(
-                "An initial '{}' may be rendered by '{}'",
-                str_to_replace, replacement_str
+                "An initial '{str_to_replace}' may be rendered by '{replacement_str}'"
             );
 
             return (new_word, explanation);
@@ -61,8 +62,7 @@ pub fn internal(str_to_replace: &str, replacement_str: &str, word: &str) -> (Str
 
         if new_word.len() >= replacement_str.len() + 2 {
             let explanation = format!(
-                "An internal '{}' may be rendered by '{}'",
-                str_to_replace, replacement_str
+                "An internal '{str_to_replace}' may be rendered by '{replacement_str}'"
             );
 
             return (new_word, explanation);
@@ -115,7 +115,7 @@ pub fn double_consonants(latin_word: &str) -> (String, String) {
     }
 
     if doubled_word.len() > latin_word.len() {
-        explanation = format!("Consonants may be doubled in '{}'", latin_word);
+        explanation = format!("Consonants may be doubled in '{latin_word}'");
     }
 
     (doubled_word, explanation)

@@ -55,12 +55,13 @@ pub fn reduce(latin_word: &str) -> Option<Vec<LatinTranslationInfo>> {
         }
     });
 
-    if stripped_latin_word == latin_word || stripped_latin_word.len() == 0 || modifiers.len() == 0 {
+    if stripped_latin_word == latin_word || stripped_latin_word.is_empty() || modifiers.is_empty() {
         return None;
     }
 
     let mut output = find_form(&stripped_latin_word, true);
 
+    #[allow(clippy::unnecessary_unwrap)]
     if output.is_some() {
         for word in output.as_mut().unwrap() {
             word.word.set_modifiers(modifiers.clone());
@@ -83,9 +84,7 @@ pub fn split_enclitic(latin_word: &str) -> (String, Vec<Modifier>) {
         .iter()
         .find(|tackon| split_word.ends_with(tackon.orth.as_str()));
 
-    if tackon.is_some() {
-        let tackon = tackon.unwrap();
-
+    if let Some(tackon) = tackon {
         // Est exception
         if latin_word != "est" {
             let mut modifier = Modifier::new();
@@ -97,32 +96,30 @@ pub fn split_enclitic(latin_word: &str) -> (String, Vec<Modifier>) {
             split_word.truncate(split_word.len() - tackon.orth.len());
             modifiers.push(modifier);
         }
-    } else {
-        if latin_word.starts_with("qu") {
-            for packon in latin_packons {
-                if split_word.ends_with(packon.orth.as_str()) {
-                    let mut modifier = Modifier::new();
-                    modifier.set_orth(&packon.orth);
-                    modifier.set_pos(packon.pos);
-                    modifier.set_senses(&packon.senses);
-                    modifier.set_modifier(ModifierType::Packon);
+    } else if latin_word.starts_with("qu") {
+        for packon in latin_packons {
+            if split_word.ends_with(packon.orth.as_str()) {
+                let mut modifier = Modifier::new();
+                modifier.set_orth(&packon.orth);
+                modifier.set_pos(packon.pos);
+                modifier.set_senses(&packon.senses);
+                modifier.set_modifier(ModifierType::Packon);
 
-                    split_word.truncate(split_word.len() - packon.orth.len());
-                    modifiers.push(modifier);
-                }
+                split_word.truncate(split_word.len() - packon.orth.len());
+                modifiers.push(modifier);
             }
-        } else {
-            for packon in latin_not_packons {
-                if split_word.ends_with(packon.orth.as_str()) {
-                    let mut modifier = Modifier::new();
-                    modifier.set_orth(&packon.orth);
-                    modifier.set_pos(packon.pos);
-                    modifier.set_senses(&packon.senses);
-                    modifier.set_modifier(ModifierType::Packon);
+        }
+    } else {
+        for packon in latin_not_packons {
+            if split_word.ends_with(packon.orth.as_str()) {
+                let mut modifier = Modifier::new();
+                modifier.set_orth(&packon.orth);
+                modifier.set_pos(packon.pos);
+                modifier.set_senses(&packon.senses);
+                modifier.set_modifier(ModifierType::Packon);
 
-                    split_word.truncate(split_word.len() - packon.orth.len());
-                    modifiers.push(modifier);
-                }
+                split_word.truncate(split_word.len() - packon.orth.len());
+                modifiers.push(modifier);
             }
         }
     }

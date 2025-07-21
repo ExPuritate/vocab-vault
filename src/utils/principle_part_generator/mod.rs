@@ -20,6 +20,7 @@ pub enum Generator {
     Numeral,
 }
 
+#[allow(clippy::too_many_arguments)]
 // fn takes in Generator, and required args for all generators, then Options for values specific to each generator
 pub fn generate_principle_parts(
     generator: Generator,
@@ -72,7 +73,7 @@ pub fn set_principle_parts(
 ) -> Vec<String> {
     let mut principle_parts = Vec::new();
 
-    if endings.iter().all(|x| x.0 == "" && x.1 == 0) {
+    if endings.iter().all(|x| x.0.is_empty() && x.1 == 0) {
         if special_case.is_none() {
             println!("No Endings or Special Case provided");
             std::process::exit(0);
@@ -85,17 +86,17 @@ pub fn set_principle_parts(
         let ending_to_add_to_part = ending.0;
         let part_to_add_ending_to = ending.1;
 
-        if ending_to_add_to_part == "" && part_to_add_ending_to == 0 {
+        if ending_to_add_to_part.is_empty() && part_to_add_ending_to == 0 {
             principle_parts.push("---".to_string());
             continue;
         }
 
-        if ending_to_add_to_part != "" && part_to_add_ending_to == 0 {
+        if !ending_to_add_to_part.is_empty() && part_to_add_ending_to == 0 {
             principle_parts.push(ending_to_add_to_part.to_string());
             continue;
         }
 
-        let mut part = if part_to_add_ending_to as usize - 1 >= parts.len() {
+        let mut part = if part_to_add_ending_to as usize > parts.len() {
             "---".to_string()
         } else {
             parts[part_to_add_ending_to as usize - 1].to_string()

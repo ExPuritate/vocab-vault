@@ -1,4 +1,8 @@
-use crate::{translators::{english_to_latin::translate_english_to_latin, latin_to_english::translate_latin_to_english, DisplayType, Language, Translation, TranslationType}, utils::{data::{get_english_dictionary, get_latin_dictionary}, sanitize_word}};
+#![feature(stmt_expr_attributes)]
+
+use std::fmt::Display;
+
+use crate::{translators::{english_to_latin::translate_english_to_latin, latin_to_english::translate_latin_to_english, Language, Translation, TranslationType}, utils::{data::{get_english_dictionary, get_latin_dictionary}, sanitize_word}};
 
 pub mod dictionary_structures;
 pub mod translators;
@@ -40,8 +44,8 @@ pub fn english_to_latin(
 
     for word in english_words {
         let definitions = translate_english_to_latin(
-            &english_dictionary,
-            &latin_dictionary,
+            english_dictionary,
+            latin_dictionary,
             &sanitize_word(word),
             max,
             sort,
@@ -53,4 +57,18 @@ pub fn english_to_latin(
     }
 
     translations
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    PartOfSpeechCannotBeConvertedToGenerator,
+    InvalidWordType(String),
+    InvalidRomanNumeral(String),
+    InvalidNumber(String),
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Error: {self:?}")
+    }
 }

@@ -17,7 +17,7 @@ pub enum Part {
     Fourth,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct LatinWordInfo {
     pub orth: String,
     pub parts: Vec<String>,
@@ -29,6 +29,12 @@ pub struct LatinWordInfo {
     pub modifiers: Option<Vec<Modifier>>,
     pub id: i32,
     pub extension_senses: Option<Vec<String>>,
+}
+
+impl Default for LatinWordInfo {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LatinWordInfo {
@@ -66,7 +72,7 @@ impl LatinWordInfo {
         }
 
         let n_value_1 = match &self.n {
-            Some(n) => n.get(0).unwrap().get_n_value_1(),
+            Some(n) => n.first().unwrap().get_n_value_1(),
             None => 0,
         };
 
@@ -200,7 +206,7 @@ impl LatinWordInfo {
         self.senses = latin_word_info.senses.to_vec();
         self.pos = latin_word_info.pos;
         self.form = latin_word_info.form.clone();
-        self.info = latin_word_info.info.clone();
+        self.info = latin_word_info.info;
         self.n = latin_word_info.n.clone();
         self.modifiers = latin_word_info.modifiers.clone();
         self.id = latin_word_info.id;
@@ -209,7 +215,7 @@ impl LatinWordInfo {
 
     pub fn get_part(&self, part: Part) -> Option<String> {
         match part {
-            Part::First => self.parts.get(0).map(|s| s.to_string()),
+            Part::First => self.parts.first().map(|s| s.to_string()),
             Part::Second => self.parts.get(1).map(|s| s.to_string()),
             Part::Third => self.parts.get(2).map(|s| s.to_string()),
             Part::Fourth => self.parts.get(3).map(|s| s.to_string()),
@@ -305,7 +311,7 @@ impl Serialize for LatinWordInfo {
         map.insert(
             "info".to_string(),
             serde_json::Value::Object(
-                serde_json::to_value(&self.info)
+                serde_json::to_value(self.info)
                     .unwrap()
                     .as_object()
                     .unwrap()
@@ -481,6 +487,12 @@ pub struct EnglishWordInfo {
     pub semi: i16,
 }
 
+impl Default for EnglishWordInfo {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EnglishWordInfo {
     pub fn new() -> EnglishWordInfo {
         EnglishWordInfo {
@@ -614,13 +626,19 @@ impl<'de> Deserialize<'de> for EnglishWordInfo {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct WordInfo {
     pub age: Age,
     pub area: Area,
     pub geo: Geography,
     pub freq: Frequency,
     pub source: Source,
+}
+
+impl Default for WordInfo {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl WordInfo {
@@ -725,6 +743,12 @@ pub struct Inflection {
     pub note: Option<String>,
     pub n: Option<Vec<NValue>>,
     pub form: Form,
+}
+
+impl Default for Inflection {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Inflection {
@@ -865,6 +889,12 @@ pub struct Stem {
     pub wid: i32,
 }
 
+impl Default for Stem {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Stem {
     pub fn new() -> Stem {
         Stem {
@@ -991,7 +1021,7 @@ impl<'de> Deserialize<'de> for Stem {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Copy)]
 pub enum ModifierType {
     Prefix,
     Suffix,
@@ -1002,25 +1032,31 @@ pub enum ModifierType {
 }
 
 impl ModifierType {
-    pub fn as_str(&self) -> String {
+    pub const fn as_str(&self) -> &'static str {
         match self {
-            ModifierType::Prefix => "prefix".to_string(),
-            ModifierType::Suffix => "suffix".to_string(),
-            ModifierType::Tackon => "enclitic tackon".to_string(),
-            ModifierType::Packon => "enclitic packon".to_string(),
-            ModifierType::NotPackon => "enclitic not packon".to_string(),
-            ModifierType::Unspecified => "unspecified".to_string(),
+            ModifierType::Prefix => "prefix",
+            ModifierType::Suffix => "suffix",
+            ModifierType::Tackon => "enclitic tackon",
+            ModifierType::Packon => "enclitic packon",
+            ModifierType::NotPackon => "enclitic not packon",
+            ModifierType::Unspecified => "unspecified",
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Modifier {
     pub pos: PartOfSpeech,
     pub form: Option<Form>,
     pub senses: Vec<String>,
     pub orth: String,
     pub modifier: ModifierType,
+}
+
+impl Default for Modifier {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Modifier {
@@ -1042,7 +1078,7 @@ impl Modifier {
         self.form = Some(form);
     }
 
-    pub fn set_senses(&mut self, senses: &Vec<String>) {
+    pub fn set_senses(&mut self, senses: &[String]) {
         self.senses = senses.to_vec();
     }
 
@@ -1063,10 +1099,7 @@ impl<'de> Deserialize<'de> for Modifier {
         let mut map = serde_json::Map::deserialize(deserializer)?;
         let pos: String =
             serde_json::from_value(map.remove("pos").unwrap()).expect("Failed to deserialize pos");
-        let form = match map.remove("form") {
-            Some(form) => Some(serde_json::from_value(form).expect("Failed to deserialize form")),
-            None => None,
-        };
+        let form = map.remove("form").map(|form| serde_json::from_value(form).expect("Failed to deserialize form"));
         let senses: Vec<String> = serde_json::from_value(map.remove("senses").unwrap())
             .expect("Failed to deserialize senses");
         let orth: String = serde_json::from_value(map.remove("orth").unwrap())
@@ -1113,23 +1146,23 @@ impl Serialize for Modifier {
             serde_json::Value::Array(
                 self.senses
                     .iter()
-                    .map(|s| serde_json::Value::String(s.to_string()))
+                    .map(|s| serde_json::Value::String(s.clone()))
                     .collect(),
             ),
         );
         map.insert(
             "orth".to_string(),
-            serde_json::Value::String(self.orth.to_string()),
+            serde_json::Value::String(self.orth.to_owned()),
         );
         map.insert(
             "modifier".to_string(),
-            serde_json::Value::String(self.modifier.as_str()),
+            serde_json::Value::String(self.modifier.as_str().to_owned()),
         );
         serde_json::Value::Object(map).serialize(serializer)
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Hash, PartialEq, Eq)]
 pub enum NValue {
     StrIntInt(String, i8, i8),
     IntInt(i8, i8),
@@ -1182,21 +1215,7 @@ impl Serialize for NValue {
     }
 }
 
-impl PartialEq for NValue {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (NValue::StrIntInt(s1, i1, i2), NValue::StrIntInt(s2, i3, i4)) => {
-                s1 == s2 && i1 == i3 && i2 == i4
-            }
-            (NValue::IntInt(i1, i2), NValue::IntInt(i3, i4)) => i1 == i3 && i2 == i4,
-            (NValue::Integer(i1), NValue::Integer(i2)) => i1 == i2,
-            (NValue::String(s1), NValue::String(s2)) => s1 == s2,
-            _ => false,
-        }
-    }
-}
-
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Form {
     StrForm(String),
     LongForm(LongForm),
@@ -1336,16 +1355,7 @@ impl<'de> Deserialize<'de> for Form {
     }
 }
 
-impl PartialEq for Form {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Form::StrForm(s1), Form::StrForm(s2)) => s1 == s2,
-            _ => false,
-        }
-    }
-}
-
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LongForm {
     pub comparison: Option<Comparison>,
     pub declension: Option<Declension>,
@@ -1423,7 +1433,7 @@ impl Serialize for LongForm {
         );
         map.insert(
             "person".to_string(),
-            serde_json::Value::String(self.person.to_owned().unwrap_or(String::new())),
+            serde_json::Value::String(self.person.to_owned().unwrap_or_default()),
         );
         map.insert(
             "pos".to_string(),
@@ -1461,6 +1471,12 @@ impl Serialize for LongForm {
         );
 
         serde_json::Value::Object(map).serialize(serializer)
+    }
+}
+
+impl Default for LongForm {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -1585,6 +1601,12 @@ pub struct Attachment {
     pub pos: PartOfSpeech,
     pub senses: Vec<String>,
     pub orth: String,
+}
+
+impl Default for Attachment {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Attachment {

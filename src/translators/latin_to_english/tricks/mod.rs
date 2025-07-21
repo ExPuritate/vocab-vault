@@ -67,10 +67,8 @@ pub fn try_tricks(word: &str) -> TrickResult {
             if updated_new_word != word {
                 return TrickResult::Found(updated_new_word, updated_explanations);
             }
-        } else {
-            if new_word != word {
-                return TrickResult::Found(new_word, explanations);
-            }
+        } else if new_word != word {
+            return TrickResult::Found(new_word, explanations);
         }
     }
 
@@ -109,16 +107,16 @@ pub fn try_medieval_tricks(word: &str) -> TrickResult {
     TrickResult::NotFound
 }
 
-fn iterate_over_tricks(trick_list: &Vec<Trick>, word: &str) -> (String, Vec<String>) {
+fn iterate_over_tricks(trick_list: &[Trick], word: &str) -> (String, Vec<String>) {
     // word should be modified after each operation is applied.
     let mut explanations = Vec::new();
     let mut modified_word = word.to_string();
 
     for trick in trick_list.iter() {
         let (word, new_explanation) = match trick.operation {
-            Operation::FlipFlop => flip_flop(trick.str_1, trick.str_2, &word),
-            Operation::Flip => flip(trick.str_1, trick.str_2, &word),
-            Operation::Internal => internal(trick.str_1, trick.str_2, &word),
+            Operation::FlipFlop => flip_flop(trick.str_1, trick.str_2, word),
+            Operation::Flip => flip(trick.str_1, trick.str_2, word),
+            Operation::Internal => internal(trick.str_1, trick.str_2, word),
         };
 
         if word != modified_word {

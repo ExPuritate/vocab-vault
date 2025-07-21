@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use self::parsers::attachment_parser::parse_attachments;
 use self::parsers::english_dictionary_parser::parse_english_dictionary;
 use self::parsers::latin_dictionary_parser::parse_latin_dictionary;
@@ -12,8 +14,8 @@ use crate::utils::data::{
     get_latin_dictionary, get_latin_not_packons, get_latin_packons, get_latin_prefixes,
     get_latin_suffixes, get_latin_tackons, get_latin_tickons, get_unique_latin_words,
 };
+use crate::Error;
 use serde::Serialize;
-use serde_json;
 
 mod parsers {
     pub mod attachment_parser;
@@ -41,8 +43,10 @@ pub enum WordType {
     UniqueLatin,
 }
 
-impl WordType {
-    pub fn from_str(s: &str) -> Result<WordType, String> {
+impl FromStr for WordType {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "english" => Ok(WordType::English), // done
             "latin" => Ok(WordType::Latin),     // done
@@ -55,17 +59,16 @@ impl WordType {
             "tackons" | "tackon" => Ok(WordType::Tackons),
             "tickons" | "tickon" => Ok(WordType::Tickons),
             "unique_latin" => Ok(WordType::UniqueLatin), // done
-            _ => Err(format!("Invalid word type: {}", s)),
+            _ => Err(Error::InvalidWordType(s.to_string())),
         }
     }
+}
 
+impl WordType {
     pub fn is_valid_word_type(s: &str) -> bool {
-        match s {
-            "english" | "latin" | "inflections" | "inflection" | "not_packons" | "not_packon"
+        matches!(s, "english" | "latin" | "inflections" | "inflection" | "not_packons" | "not_packon"
             | "packon" | "packons" | "prefixes" | "prefix" | "stems" | "stem" | "suffixes"
-            | "suffix" | "tackons" | "tackon" | "tickons" | "tickon" | "unique_latin" => true,
-            _ => false,
-        }
+            | "suffix" | "tackons" | "tackon" | "tickons" | "tickon" | "unique_latin")
     }
 }
 
@@ -80,6 +83,7 @@ pub enum OutputList {
     Stems(Vec<Stem>),
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn get_list(
     word_type: WordType,
     pos_list: Option<Vec<PartOfSpeech>>,
@@ -88,10 +92,8 @@ pub fn get_list(
     exact: Option<i32>,
     amount: Option<i32>,
     random: bool,
-    display: bool,
-    to: Option<String>,
-) {
-    let list: OutputList = match word_type {
+) -> OutputList {
+    match word_type {
         WordType::English => {
             let list = parse_english_dictionary(pos_list, max, min, exact, amount, random);
             OutputList::English(list)
@@ -146,35 +148,5 @@ pub fn get_list(
                 parse_latin_dictionary(dictionary, pos_list, max, min, exact, amount, random);
             OutputList::Latin(list)
         }
-    };
-    if display {
-        println!("{}", serde_json::to_string_pretty(&list).unwrap());
-    }
-
-    if to.is_some() {
-        let mut file_path = to.unwrap();
-
-        if !file_path.ends_with(".json") {
-            file_path.push_str(".json");
-        }
-
-        if std::path::Path::new(&file_path).exists() {
-            println!("File already exists, do you want to overwrite it? (y/n)");
-            let mut input = String::new();
-            std::io::stdin().read_line(&mut input).unwrap();
-            if input.trim() != "y" {
-                return;
-            }
-        }
-
-        let path = std::path::Path::new(&file_path);
-
-        if !path.exists() {
-            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        }
-
-        let file = std::fs::File::create(&file_path).unwrap();
-        serde_json::to_writer_pretty(file, &list).unwrap();
-        println!("File created successfully at {}", file_path);
     }
 }

@@ -142,6 +142,7 @@ impl Translation {
     fn sort(&mut self) {
         let sorted_translation = self;
 
+        #[allow(clippy::single_match)]
         match &mut sorted_translation.definitions {
             &mut TranslationType::Latin(ref mut info) => {
                 info.sort_by(|a, b| {
@@ -168,20 +169,20 @@ impl Translation {
                     for definition in definitions {
                         if definition.tricks.is_some() {
                             for trick in definition.tricks.as_ref().unwrap() {
-                                println!("{}", trick);
+                                println!("{trick}");
                             }
                         }
-                        if &definition.word.parts.len() > &0 {
+                        if !definition.word.parts.is_empty() {
                             println!();
                             for part in &definition.word.parts {
-                                print!("{} ", part);
+                                print!("{part} ");
                             }
                             println!();
                         }
                         println!("{}", definition.word.pos.as_str());
                         match definition.word.form {
                             Form::StrForm(ref form) => {
-                                println!("{}", form);
+                                println!("{form}");
                             }
                             Form::LongForm(ref form) => {
                                 println!("{}", form.as_clean_str());
@@ -213,7 +214,7 @@ impl Translation {
                                     "{}.{} | {}",
                                     stem_orth, inflection.ending, form_string
                                 );
-                                println!("{}", inflection_line);
+                                println!("{inflection_line}");
                             }
                         }
 
@@ -221,7 +222,7 @@ impl Translation {
                             println!("{}", definition.word.info.as_str());
                         }
                         for sense in &definition.word.senses {
-                            print!("{} ", sense);
+                            print!("{sense} ");
                         }
 
                         if definition.word.modifiers.is_some() {
@@ -230,7 +231,7 @@ impl Translation {
                                 println!("\n{}: {}", modifier.modifier.as_str(), modifier.orth);
                                 println!("{} ", modifier.pos.as_str());
                                 for sense in &modifier.senses {
-                                    print!("{} ", sense);
+                                    print!("{sense} ");
                                 }
                             }
                         }
@@ -246,13 +247,13 @@ impl Translation {
                     for definition in definitions {
                         println!();
                         for part in &definition.translation.parts {
-                            print!("{} ", part);
+                            print!("{part} ");
                         }
                         println!();
                         println!("{}", definition.word.pos.as_str());
                         match definition.translation.form {
                             Form::StrForm(ref form) => {
-                                println!("{}", form);
+                                println!("{form}");
                             }
                             Form::LongForm(ref form) => {
                                 println!("{}", form.as_clean_str());
@@ -262,7 +263,7 @@ impl Translation {
                             println!("{}", definition.translation.info.as_str());
                         }
                         for sense in &definition.translation.senses {
-                            print!("{} ", sense);
+                            print!("{sense} ");
                         }
                         println!();
                     }

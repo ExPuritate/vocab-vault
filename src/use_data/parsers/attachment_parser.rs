@@ -4,7 +4,7 @@ use crate::use_data::utils::word_fits_filters;
 use rand::Rng;
 
 pub fn parse_attachments(
-    attachments: Vec<Attachment>,
+    attachments: &[Attachment],
     pos_list: Option<Vec<PartOfSpeech>>,
     max: Option<i32>,
     min: Option<i32>,
@@ -16,9 +16,9 @@ pub fn parse_attachments(
 
     if let Some(amount) = amount {
         if random {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             while attachment_list.len() as i32 != amount {
-                let random_index = rng.gen_range(0..attachments.len());
+                let random_index = rng.random_range(0..attachments.len());
                 let attachment_at_index = attachments[random_index].clone();
                 if !word_fits_filters(
                     &attachment_at_index.orth,
@@ -45,7 +45,7 @@ pub fn parse_attachments(
                     continue;
                 }
 
-                attachment_list.push(attachment);
+                attachment_list.push(attachment.clone());
                 if attachment_list.len() as i32 == amount {
                     break;
                 }
@@ -64,7 +64,7 @@ pub fn parse_attachments(
                 continue;
             }
 
-            attachment_list.push(attachment);
+            attachment_list.push(attachment.clone());
         }
     }
 

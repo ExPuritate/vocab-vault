@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Comparison {
     Positive,
     Comparative,
@@ -28,7 +28,7 @@ impl Comparison {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Declension {
     Nominative,
     Genitive,
@@ -68,7 +68,7 @@ impl Declension {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Gender {
     Masculine,
     Feminine,
@@ -77,14 +77,8 @@ pub enum Gender {
     Unknown,
 }
 
-impl PartialEq for Gender {
-    fn eq(&self, other: &Self) -> bool {
-        self.as_str() == other.as_str()
-    }
-}
-
 impl Gender {
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(&self) -> &'static str {
         match &self {
             Gender::Masculine => "masculine",
             Gender::Feminine => "feminine",
@@ -105,7 +99,7 @@ impl Gender {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Mood {
     Indicative,
     Subjunctive,
@@ -136,7 +130,7 @@ impl Mood {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Noun {
     Singular,
     Plural,
@@ -182,7 +176,7 @@ impl Noun {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Numeral {
     Cardinal,
     Ordinal,
@@ -213,7 +207,7 @@ impl Numeral {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Number {
     Singular,
     Plural,
@@ -238,7 +232,7 @@ impl Number {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PartOfSpeech {
     Noun,
     Verb,
@@ -259,14 +253,8 @@ pub enum PartOfSpeech {
     Unknown,
 }
 
-impl PartialEq for PartOfSpeech {
-    fn eq(&self, other: &Self) -> bool {
-        self.as_str() == other.as_str()
-    }
-}
-
 impl PartOfSpeech {
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(&self) -> &'static str {
         match &self {
             PartOfSpeech::Noun => "noun",
             PartOfSpeech::Verb => "verb",
@@ -288,18 +276,15 @@ impl PartOfSpeech {
         }
     }
 
-    pub fn convert_to_generator(&self) -> crate::utils::principle_part_generator::Generator {
+    pub fn convert_to_generator(&self) -> anyhow::Result<crate::utils::principle_part_generator::Generator> {
         match &self {
-            PartOfSpeech::Noun => crate::utils::principle_part_generator::Generator::Noun,
-            PartOfSpeech::Pronoun => crate::utils::principle_part_generator::Generator::Pronoun,
-            PartOfSpeech::Adjective => crate::utils::principle_part_generator::Generator::Adjective,
-            PartOfSpeech::Verb => crate::utils::principle_part_generator::Generator::Verb,
-            PartOfSpeech::Participle => crate::utils::principle_part_generator::Generator::Verb,
-            PartOfSpeech::Numeral => crate::utils::principle_part_generator::Generator::Numeral,
-            _ => {
-                println!("Cannot convert {:?} to a generator", self);
-                std::process::exit(0);
-            }
+            PartOfSpeech::Noun => Ok(crate::utils::principle_part_generator::Generator::Noun),
+            PartOfSpeech::Pronoun => Ok(crate::utils::principle_part_generator::Generator::Pronoun),
+            PartOfSpeech::Adjective => Ok(crate::utils::principle_part_generator::Generator::Adjective),
+            PartOfSpeech::Verb => Ok(crate::utils::principle_part_generator::Generator::Verb),
+            PartOfSpeech::Participle => Ok(crate::utils::principle_part_generator::Generator::Verb),
+            PartOfSpeech::Numeral => Ok(crate::utils::principle_part_generator::Generator::Numeral),
+            _ => Err(crate::Error::PartOfSpeechCannotBeConvertedToGenerator.into()),
         }
     }
 
@@ -326,7 +311,7 @@ impl PartOfSpeech {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Pronoun {
     Personal,
     Demonstrative,
@@ -366,7 +351,7 @@ impl Pronoun {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Tense {
     Present,
     Imperfect,
@@ -406,7 +391,7 @@ impl Tense {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Verb {
     ToBe,
     ToBeing,
@@ -422,14 +407,8 @@ pub enum Verb {
     Unknown,
 }
 
-impl PartialEq for Verb {
-    fn eq(&self, other: &Self) -> bool {
-        self.as_str() == other.as_str()
-    }
-}
-
 impl Verb {
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(&self) -> &'static str {
         match &self {
             Verb::ToBe => "to be",
             Verb::ToBeing => "to being",
@@ -464,7 +443,7 @@ impl Verb {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Voice {
     Active,
     Passive,
@@ -489,7 +468,7 @@ impl Voice {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Age {
     Archaic,
     Early,
@@ -504,7 +483,7 @@ pub enum Age {
 }
 
 impl Age {
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(&self) -> &'static str {
         match &self {
             Age::Archaic => "archaic",
             Age::Early => "early",
@@ -535,7 +514,7 @@ impl Age {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Area {
     Agriculture,
     Biological,
@@ -553,7 +532,7 @@ pub enum Area {
 }
 
 impl Area {
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(&self) -> &'static str {
         match &self {
             Area::Agriculture => "agriculture",
             Area::Biological => "biological",
@@ -590,7 +569,7 @@ impl Area {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Geography {
     Africa,
     Britain,
@@ -614,7 +593,7 @@ pub enum Geography {
 }
 
 impl Geography {
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(&self) -> &'static str {
         match &self {
             Geography::Africa => "Africa",
             Geography::Britain => "Britain",
@@ -663,7 +642,7 @@ impl Geography {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Frequency {
     VeryFrequent,
     Frequent,
@@ -679,7 +658,7 @@ pub enum Frequency {
 }
 
 impl Frequency {
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(&self) -> &'static str {
         match &self {
             Frequency::VeryFrequent => "very frequent",
             Frequency::Frequent => "frequent",
@@ -728,7 +707,7 @@ impl Frequency {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Source {
     Beeson,
     Beard,
@@ -758,7 +737,7 @@ pub enum Source {
 }
 
 impl Source {
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(&self) -> &'static str {
         match &self {
             Source::Beeson => "C.H.Beeson, A Primer of Medieval Latin, 1925 (Bee)",
             Source::Beard => "Charles Beard, Cassell's Latin Dictionary 1892 (CAS)",

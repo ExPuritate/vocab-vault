@@ -17,9 +17,9 @@ pub fn parse_latin_stems(
 
     if let Some(amount) = amount {
         if random {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             while stem_list.len() as i32 != amount {
-                let random_index = rng.gen_range(0..latin_stems.len());
+                let random_index = rng.random_range(0..latin_stems.len());
                 let stem_at_index = latin_stems[random_index].clone();
                 if !word_fits_filters(
                     &stem_at_index.orth,
@@ -39,7 +39,7 @@ pub fn parse_latin_stems(
                     continue;
                 }
 
-                stem_list.push(stem);
+                stem_list.push(stem.clone());
                 if stem_list.len() as i32 == amount {
                     break;
                 }
@@ -51,7 +51,7 @@ pub fn parse_latin_stems(
                 continue;
             }
 
-            stem_list.push(stem);
+            stem_list.push(stem.clone());
         }
     }
 

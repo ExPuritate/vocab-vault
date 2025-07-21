@@ -4,7 +4,7 @@ use crate::use_data::utils::word_fits_filters;
 use rand::Rng;
 
 pub fn parse_modifiers(
-    modifiers: Vec<Modifier>,
+    modifiers: &[Modifier],
     pos_list: Option<Vec<PartOfSpeech>>,
     max: Option<i32>,
     min: Option<i32>,
@@ -16,9 +16,9 @@ pub fn parse_modifiers(
 
     if let Some(amount) = amount {
         if random {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             while modifier_list.len() as i32 != amount {
-                let random_index = rng.gen_range(0..modifiers.len());
+                let random_index = rng.random_range(0..modifiers.len());
                 let modifier_at_index = modifiers[random_index].clone();
                 if !word_fits_filters(
                     &modifier_at_index.orth,
@@ -45,7 +45,7 @@ pub fn parse_modifiers(
                     continue;
                 }
 
-                modifier_list.push(modifier);
+                modifier_list.push(modifier.clone());
                 if modifier_list.len() as i32 == amount {
                     break;
                 }
@@ -64,7 +64,7 @@ pub fn parse_modifiers(
                 continue;
             }
 
-            modifier_list.push(modifier);
+            modifier_list.push(modifier.clone());
         }
     }
 

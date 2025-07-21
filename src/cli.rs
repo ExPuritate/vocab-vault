@@ -29,6 +29,12 @@ pub struct Cli<'a> {
     pub default_command: Option<String>,
 }
 
+impl Default for Arg {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Arg {
     pub fn new() -> Arg {
         Arg {
@@ -101,7 +107,7 @@ impl<'a> Command<'a> {
     /**
      * Adds arguments to the command
      */
-    pub fn with_args(mut self, args: &Vec<Arg>) -> Command<'a> {
+    pub fn with_args(mut self, args: &[Arg]) -> Command<'a> {
         if self.args.is_none() {
             self.args = Some(vec![]);
         }
@@ -112,7 +118,7 @@ impl<'a> Command<'a> {
     /**
      * Checks if the required arguments are present
      */
-    fn check_if_required_args_are_present(&self, env_args: &Vec<String>, arg: &Arg) {
+    fn check_if_required_args_are_present(&self, env_args: &[String], arg: &Arg) {
         for required in &arg.requires {
             let required_arg = self.find_arg(required).unwrap();
             if !env_args
@@ -151,7 +157,7 @@ impl<'a> Command<'a> {
                 break;
             }
             value.push_str(arg);
-            value.push_str(" ");
+            value.push(' ');
         }
         ArgValue::Present(value.trim().to_string())
     }
@@ -194,12 +200,16 @@ impl<'a> Command<'a> {
                 });
 
                 let value = arg_index.and_then(|index| args.get(index + 1));
-                value
-                    .or_else(|| arg.default.as_ref())
-                    .map(|s| s.to_string())
+                value.or(arg.default.as_ref()).map(|s| s.to_string())
             })
-            .map(|value| ArgValue::Present(value))
+            .map(ArgValue::Present)
             .unwrap_or(ArgValue::Missing(arg_name.to_string()))
+    }
+}
+
+impl<'a> Default for Cli<'a> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -247,7 +257,7 @@ impl<'a> Cli<'a> {
         self
     }
 
-    pub fn with_commands(mut self, commands: Vec<Command<'a>>) -> Cli {
+    pub fn with_commands(mut self, commands: Vec<Command<'a>>) -> Cli<'a> {
         self.commands = commands;
         self
     }
@@ -288,7 +298,7 @@ impl<'a> Cli<'a> {
                 .iter()
                 .find(|&command| command.name == command_name)
                 .unwrap_or_else(|| {
-                    println!("Command not found: {}", command_name);
+                    println!("Command not found: {command_name}");
                     std::process::exit(0);
                 })
         }
@@ -321,7 +331,7 @@ impl<'a> Cli<'a> {
             self.command_help(command)
         } else {
             for command in &self.commands {
-                self.command_help(&command)
+                self.command_help(command)
             }
         }
         println!();
@@ -335,14 +345,14 @@ impl<'a> Cli<'a> {
             for arg in args {
                 let short = arg
                     .short
-                    .map(|s| format!("-{}", s))
+                    .map(|s| format!("-{s}"))
                     .unwrap_or("".to_string());
                 let long = arg
                     .long
-                    .map(|s| format!("--{}", s))
+                    .map(|s| format!("--{s}"))
                     .unwrap_or("".to_string());
                 let value = format!("<{}>", arg.value_name);
-                let default = arg.default.as_ref().map(|s| format!(" (default: {})", s));
+                let default = arg.default.as_ref().map(|s| format!(" (default: {s})"));
                 println!(
                     "        {:<12} {:<12} {:<12} {:<12}{}",
                     short,
@@ -366,7 +376,7 @@ impl ArgValue {
     pub fn throw_if_none(&self) -> String {
         match self {
             ArgValue::Missing(name) => {
-                println!("Missing required argument: {}", name);
+                println!("Missing required argument: {name}");
                 std::process::exit(0);
             }
             ArgValue::Present(value) => value.to_string(),

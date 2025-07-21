@@ -8,12 +8,12 @@ use crate::utils::data::{get_latin_inflections, get_latin_stems, get_unique_lati
 
 pub fn parse(latin_word: &str, reduced: bool) -> Option<Vec<LatinTranslationInfo>> {
     match find_form(latin_word, reduced) {
-        Some(form) => return Some(form),
+        Some(form) => Some(form),
         None => match parse_unique_latin_words(latin_word) {
             Some(unique_word) => {
                 let mut translation = LatinTranslationInfo::new();
                 translation.word = unique_word;
-                return Some(vec![translation]);
+                Some(vec![translation])
             }
             None => None,
         },
@@ -25,23 +25,24 @@ fn parse_unique_latin_words(latin_word: &str) -> Option<LatinWordInfo> {
 
     let latin_word_lower = latin_word.to_lowercase();
     unique_words
-        .into_iter()
+        .iter()
         .find(|unique_word| unique_word.orth.to_lowercase() == latin_word_lower)
+        .cloned()
 }
 
 pub fn find_form(latin_word: &str, reduced: bool) -> Option<Vec<LatinTranslationInfo>> {
-    let latin_inflections: Vec<Inflection> = get_latin_inflections();
+    let latin_inflections = get_latin_inflections();
     let mut latin_word_inflections: Vec<Inflection> = Vec::new();
 
     for inflection in latin_inflections {
         if latin_word.ends_with(inflection.ending.as_str()) {
             // if the longest inflection has been found, stop looking
-            if latin_word_inflections.len() > 0
+            if !latin_word_inflections.is_empty()
                 && latin_word_inflections[0].ending.len() > inflection.ending.len()
             {
                 break;
             }
-            latin_word_inflections.push(inflection);
+            latin_word_inflections.push(inflection.clone());
         }
     }
 
@@ -80,77 +81,74 @@ fn check_stems(
             true => {
                 let tricked = try_medieval_tricks(word_stem);
 
-                let word_stem = match tricked {
+                match tricked {
                     TrickResult::Found(word, _) => word,
                     TrickResult::NotFound => word_stem.to_string(),
-                };
-
-                word_stem
+                }
             }
             false => word_stem.to_string(),
         };
 
-        for stem in &latin_stems {
-            if word_stem == stem.orth {
-                if inflection.pos == stem.pos
+        for stem in latin_stems {
+            if word_stem == stem.orth
+                && (inflection.pos == stem.pos
                     || (inflection.pos == PartOfSpeech::Participle
                         && stem.pos == PartOfSpeech::Verb)
                     || (inflection.pos == PartOfSpeech::Verb
-                        && stem.pos == PartOfSpeech::Participle)
-                {
-                    let n_from_inflection = match &inflection.n {
-                        Some(n) => n,
-                        None => {
-                            println!("Inflection has no n value");
-                            std::process::exit(0);
-                        }
-                    };
-                    let n_from_stem = match &stem.n {
-                        Some(n) => n,
-                        None => {
-                            println!("Stem has no n value");
-                            std::process::exit(0);
-                        }
-                    };
-
-                    //TODO: Weird issue here where some words get inflections but should not (cur)
-                    if n_from_stem.len() == 1 && n_from_stem[0] != n_from_inflection[0] {
-                        continue;
+                        && stem.pos == PartOfSpeech::Participle))
+            {
+                let n_from_inflection = match &inflection.n {
+                    Some(n) => n,
+                    None => {
+                        println!("Inflection has no n value");
+                        std::process::exit(0);
                     }
-
-                    if n_from_stem.len() >= 2 {
-                        if n_from_inflection[0] != n_from_stem[0]
-                            && n_from_inflection[0] != NValue::Integer(0)
-                        {
-                            continue;
-                        }
-
-                        if n_from_inflection[1] != n_from_stem[1]
-                            && n_from_inflection[1] != NValue::Integer(0)
-                        {
-                            continue;
-                        }
+                };
+                let n_from_stem = match &stem.n {
+                    Some(n) => n,
+                    None => {
+                        println!("Stem has no n value");
+                        std::process::exit(0);
                     }
+                };
 
-                    if found_inflection_forms.contains(&inflection.form.as_str()) {
-                        continue;
-                    }
-
-                    found_inflection_forms.push(inflection.form.as_str());
-
-                    for stem_inflection in &inflections {
-                        if stem_inflection.pos == inflection.pos
-                            || (stem_inflection.pos == PartOfSpeech::Participle
-                                && inflection.pos == PartOfSpeech::Verb)
-                            || (stem_inflection.pos == PartOfSpeech::Verb
-                                && inflection.pos == PartOfSpeech::Participle)
-                        {
-                            break;
-                        }
-                    }
-                    matched_stems.push(stem.clone());
-                    inflections.push(inflection.clone());
+                //TODO: Weird issue here where some words get inflections but should not (cur)
+                if n_from_stem.len() == 1 && n_from_stem[0] != n_from_inflection[0] {
+                    continue;
                 }
+
+                if n_from_stem.len() >= 2 {
+                    if n_from_inflection[0] != n_from_stem[0]
+                        && n_from_inflection[0] != NValue::Integer(0)
+                    {
+                        continue;
+                    }
+
+                    if n_from_inflection[1] != n_from_stem[1]
+                        && n_from_inflection[1] != NValue::Integer(0)
+                    {
+                        continue;
+                    }
+                }
+
+                if found_inflection_forms.contains(&inflection.form.as_str()) {
+                    continue;
+                }
+
+                found_inflection_forms.push(inflection.form.as_str());
+
+                for stem_inflection in &inflections {
+                    if stem_inflection.pos == inflection.pos
+                        || (stem_inflection.pos == PartOfSpeech::Participle
+                            && inflection.pos == PartOfSpeech::Verb)
+                        || (stem_inflection.pos == PartOfSpeech::Verb
+                            && inflection.pos == PartOfSpeech::Participle)
+                    {
+                        break;
+                    }
+                }
+                matched_stems.push(stem.clone());
+                inflections.push(inflection.clone());
             }
         }
     }

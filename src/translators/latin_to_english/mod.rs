@@ -24,6 +24,12 @@ pub struct LatinTranslationInfo {
     pub inflections: Option<Vec<Inflection>>,
 }
 
+impl Default for LatinTranslationInfo {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LatinTranslationInfo {
     pub fn new() -> LatinTranslationInfo {
         LatinTranslationInfo {
@@ -58,18 +64,18 @@ impl LatinTranslationInfo {
         self.inflections = Some(inflections);
     }
 
-    pub fn set_tricks(&mut self, tricks: &Vec<String>) {
+    pub fn set_tricks(&mut self, tricks: &[String]) {
         self.tricks = Some(tricks.to_vec());
     }
 }
 
 pub fn translate_latin_to_english(latin_word: &str, tricks: bool) -> Vec<LatinTranslationInfo> {
-    if is_roman_number(&latin_word) {
-        match evaluate_roman_numeral(&latin_word) {
+    if is_roman_number(latin_word) {
+        match evaluate_roman_numeral(latin_word) {
             Ok(number) => {
                 if number > 0 {
                     let mut translation = LatinTranslationInfo::new();
-                    translation.word.set_orth(&latin_word);
+                    translation.word.set_orth(latin_word);
                     translation
                         .word
                         .set_senses(vec![format!("Number for the Roman Numeral {}", number)]);
@@ -86,16 +92,16 @@ pub fn translate_latin_to_english(latin_word: &str, tricks: bool) -> Vec<LatinTr
                 }
             }
             Err(e) => {
-                println!("Error evaluating roman numeral: {}", e);
+                println!("Error evaluating roman numeral: {e}");
                 return Vec::new();
             }
         }
     }
 
-    let mut output = parse(&latin_word, false);
+    let mut output = parse(latin_word, false);
 
     if tricks {
-        let trick_results = try_tricks(&latin_word);
+        let trick_results = try_tricks(latin_word);
 
         let mut modified_word = if trick_results.is_found() {
             trick_results.get_word()
@@ -114,15 +120,15 @@ pub fn translate_latin_to_english(latin_word: &str, tricks: bool) -> Vec<LatinTr
         if modified_word != latin_word && modified_word != String::new() {
             let mut new_output = parse(&modified_word, false);
 
-            if new_output.is_some() {
-                for word in new_output.as_mut().unwrap() {
+            if let Some(new_output) = &mut new_output {
+                for word in new_output.iter_mut() {
                     word.set_tricks(&explanations);
                 }
 
-                if output.is_some() {
-                    output.as_mut().unwrap().extend(new_output.unwrap());
+                if let Some(output) = &mut output {
+                    output.extend_from_slice(new_output);
                 } else {
-                    output = new_output;
+                    output = Some(new_output.clone());
                 }
             }
         }
@@ -134,15 +140,15 @@ pub fn translate_latin_to_english(latin_word: &str, tricks: bool) -> Vec<LatinTr
     // ex: clamaverunt -> clamare
     // doing this here instead of earlier should fix words like salve having the "ve" removed and returning wrong def
     if output.is_none() {
-        let (word_without_ecliptics, modifiers) = split_enclitic(&latin_word);
+        let (word_without_ecliptics, modifiers) = split_enclitic(latin_word);
         output = parse(&word_without_ecliptics, false);
 
-        if output.is_some() {
-            for word in output.as_mut().unwrap() {
+        if let Some(output) = &mut output {
+            for word in output.iter_mut() {
                 word.word.set_modifiers(modifiers.clone());
             }
         }
     }
 
-    output.unwrap_or(Vec::new())
+    output.unwrap_or_default()
 }

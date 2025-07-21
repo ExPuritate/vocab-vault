@@ -72,26 +72,25 @@ pub fn generate_for_verbs(
                         set_principle_parts(parts, vec![("et", 1), ("", 0), ("", 0), ("", 0)], None)
                     }
                     3 => {
+                        #[allow(clippy::if_same_then_else)]
                         if num_type_2 == 2 {
                             set_principle_parts(
                                 parts,
                                 vec![("t", 1), ("", 0), ("", 0), ("", 0)],
                                 None,
                             )
+                        } else if parts[0].ends_with("i") {
+                            set_principle_parts(
+                                parts,
+                                vec![("t", 1), ("", 0), ("", 0), ("", 0)],
+                                None,
+                            )
                         } else {
-                            if parts[0].ends_with("i") {
-                                set_principle_parts(
-                                    parts,
-                                    vec![("t", 1), ("", 0), ("", 0), ("", 0)],
-                                    None,
-                                )
-                            } else {
-                                set_principle_parts(
-                                    parts,
-                                    vec![("it", 1), ("", 0), ("", 0), ("", 0)],
-                                    None,
-                                )
-                            }
+                            set_principle_parts(
+                                parts,
+                                vec![("it", 1), ("", 0), ("", 0), ("", 0)],
+                                None,
+                            )
                         }
                     }
                     5 => {
