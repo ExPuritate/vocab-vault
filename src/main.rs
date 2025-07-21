@@ -1,21 +1,13 @@
 pub mod cli;
-pub mod dictionary_structures;
-pub mod translators;
-pub mod use_data;
-pub mod utils;
-
 use std::io::Write;
 
-use cli::{Arg, Cli, Command};
-use dictionary_structures::dictionary_keys::PartOfSpeech;
-use translators::english_to_latin::translate_english_to_latin;
-use translators::latin_to_english::translate_latin_to_english;
-use translators::{DisplayType, Language, Translation, TranslationType};
-use use_data::{get_list, WordType};
-use utils::data::{get_english_dictionary, get_latin_dictionary};
-use utils::sanitize_word;
+use cli::{Arg, Cli, Command, ArgValue};
+use vocab_vault::dictionary_structures::dictionary_keys::PartOfSpeech;
+use vocab_vault::translators::Language;
+use vocab_vault::use_data::{get_list, WordType};
+use vocab_vault::{english_to_latin, latin_to_english};
 
-use crate::cli::ArgValue;
+use vocab_vault::{translators::DisplayType};
 //TODO: add a command for searching a word by id in english or latin dictionary
 //TODO: display the amount of time it took for a command to execute
 fn main() {
@@ -155,7 +147,14 @@ fn main() {
             let pretty = command.has("pretty");
             let detailed = command.has("detailed");
 
-            english_to_latin(&words, max, sort, pretty, detailed);
+            let translations = english_to_latin(&words, max, sort);
+            if pretty {
+                for translation in translations {
+                    translation.display(DisplayType::Pretty(detailed));
+                }
+            } else {
+                println!("{}", serde_json::to_string_pretty(&translations).unwrap());
+            }
         }
         "transLat" => {
             let words = command.get_value().throw_if_none();
@@ -169,7 +168,14 @@ fn main() {
             let detailed = command.has("detailed");
             let tricks = command.has("tricks");
 
-            latin_to_english(&words, max, tricks, sort, pretty, detailed);
+            let translations = latin_to_english(&words, max, tricks, sort);
+            if pretty {
+                for translation in translations {
+                    translation.display(DisplayType::Pretty(detailed));
+                }
+            } else {
+                println!("{}", serde_json::to_string_pretty(&translations).unwrap());
+            }
         }
         "getList" => {
             let type_of_words = command.get_value().throw_if_none();
@@ -277,10 +283,24 @@ fn main() {
                     }
                     _ => match language {
                         Language::Latin => {
-                            latin_to_english(input, 6, true, true, true, false);
+                            let translations = latin_to_english(input, 6, true, true);
+                            if false {
+                                for translation in translations {
+                                    translation.display(DisplayType::Pretty(false));
+                                }
+                            } else {
+                                println!("{}", serde_json::to_string_pretty(&translations).unwrap());
+                            }
                         }
                         Language::English => {
-                            english_to_latin(input, 6, true, true, true);
+                            let translations = english_to_latin(input, 6, true);
+                            if false {
+                                for translation in translations {
+                                    translation.display(DisplayType::Pretty(false));
+                                }
+                            } else {
+                                println!("{}", serde_json::to_string_pretty(&translations).unwrap());
+                            }
                         }
                     },
                 }
@@ -293,68 +313,3 @@ fn main() {
 }
 
 //TODO: get dictionaries here, to not repeat getting them for each word
-fn latin_to_english(
-    latin_text: &str,
-    max: usize,
-    tricks: bool,
-    sort: bool,
-    pretty_output: bool,
-    detailed_pretty_output: bool,
-) {
-    let latin_words: Vec<&str> = latin_text.split(" ").collect();
-    let mut translations: Vec<Translation> = Vec::new();
-
-    for word in latin_words {
-        let mut definitions = translate_latin_to_english(&sanitize_word(word), tricks);
-        definitions.truncate(max);
-        let mut translation =
-            Translation::new(word.to_string(), TranslationType::Latin(definitions));
-
-        translation.post_process(Language::Latin, sort);
-        translations.push(translation);
-    }
-
-    if pretty_output {
-        for translation in translations {
-            translation.display(DisplayType::Pretty(detailed_pretty_output));
-        }
-    } else {
-        println!("{}", serde_json::to_string_pretty(&translations).unwrap());
-    }
-}
-
-fn english_to_latin(
-    english_text: &str,
-    max: usize,
-    sort: bool,
-    pretty_output: bool,
-    detailed_pretty_output: bool,
-) {
-    let english_words: Vec<&str> = english_text.split(" ").collect();
-    let mut translations: Vec<Translation> = Vec::new();
-
-    let latin_dictionary = get_latin_dictionary();
-    let english_dictionary = get_english_dictionary();
-
-    for word in english_words {
-        let definitions = translate_english_to_latin(
-            &english_dictionary,
-            &latin_dictionary,
-            &sanitize_word(word),
-            max,
-            sort,
-        );
-        let mut translation =
-            Translation::new(word.to_string(), TranslationType::English(definitions));
-        translation.post_process(Language::English, sort);
-        translations.push(translation);
-    }
-
-    if pretty_output {
-        for translation in translations {
-            translation.display(DisplayType::Pretty(detailed_pretty_output));
-        }
-    } else {
-        println!("{}", serde_json::to_string_pretty(&translations).unwrap());
-    }
-}
